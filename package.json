@@ -1,12 +1,11 @@
 {
   "name": "@adicuco/deep-thought",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "type": "module",
   "scripts": {
     "check": "biome check .",
     "fix": "biome check --fix .",
