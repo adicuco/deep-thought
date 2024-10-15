@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-node@v4
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: 🚢 Publish package
         id: publish
