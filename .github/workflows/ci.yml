@@ -50,3 +50,25 @@ jobs:
 
       - name: 🔎 Type check
         run: pnpm typecheck
+
+ test:
+   name: 🧪 Test
+   runs-on: ubuntu-latest
+
+   steps:
+    - name: 🛑 Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.12.1
+
+    - name: ⬇️ Checkout repo
+      uses: actions/checkout@v4
+
+    - uses: pnpm/action-setup@v4
+
+    - name: ⎔ Setup Node.js
+      uses: actions/setup-node@v4
+
+    - name: 📥 Download deps
+      run: pnpm install --ignore-scripts
+
+    - name: 🧪 Run tests
+      run: pnpm test
