@@ -1,0 +1,101 @@
+name: 📦 Publish package
+
+on:
+  pull_request_target:
+    types: [closed]
+
+env:
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  check-version:
+    name: 👀 Check version
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    outputs:
+      version_incremented: ${{ steps.check_version.outputs.version_incremented }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+
+      - name: 🧑‍⚖️ Check if version was incremented
+        id: check_version
+        run: |
+          # Get the latest version of the package from GitHub's private npm registry
+          LATEST_VERSION=$(npm show @adicuco/deep-thought version)
+
+          # Get the current version from package.json
+          CURRENT_VERSION=$(jq -r .version package.json)
+
+          # Compare the versions and include details
+          if [ "$LATEST_VERSION" == "$CURRENT_VERSION" ]; then
+             echo "Version was not incremented ❌"
+             echo "Current version: $CURRENT_VERSION, Latest version on registry: $LATEST_VERSION"
+             echo "version_incremented=false" >> $GITHUB_OUTPUT
+             exit 0
+          else
+             echo "Version was incremented ✅"
+             echo "Current version: $CURRENT_VERSION, Latest version on registry: $LATEST_VERSION"
+             echo "version_incremented=true" >> $GITHUB_OUTPUT
+          fi
+
+  publish-package:
+    name: 🚀 Publish package
+    runs-on: ubuntu-latest
+    needs: check-version
+    if: ${{ needs.check-version.outputs.version_incremented == 'true' }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+
+      - name: 📥 Install deps
+        run: pnpm install
+
+      - name: 🚢 Publish package
+        id: publish
+        run: pmpm publish
+        continue-on-error: true
+
+      - name: 📣 Notify publish result
+        id: notify
+        run: |
+          NEW_VERSION=$(npm show @adicuco/deep-thought version)
+          if [ "${{ steps.publish.outcome }}" == "success" ]; then
+            echo "Package was successfully published ✅"
+            echo "## Package Publish Result" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Successfully published ✅" >> $GITHUB_STEP_SUMMARY
+            echo "- **Version**: $NEW_VERSION" >> $GITHUB_STEP_SUMMARY
+            echo "::set-output name=status::success"
+            echo "::set-output name=version::$NEW_VERSION"
+          else
+            echo "Package publish failed ❌"
+            echo "## Package Publish Result" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Failed to publish ❌" >> $GITHUB_STEP_SUMMARY
+            echo "::set-output name=status::failure"
+            echo "::set-output name=version::N/A"
+          fi
+
+      - name: 💬 Add comment to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = '${{ steps.notify.outputs.status }}';
+            const version = '${{ steps.notify.outputs.version }}';
+            const comment = status === 'success'
+              ? `@adicuco/deep-thought ${version} package was successfully published ✅`
+              : `@adicuco/deep-thought package publish failed ❌`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
