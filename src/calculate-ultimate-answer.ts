@@ -1,3 +1,3 @@
 export function calculateUltimateAnswer() {
-  return 42;
+	return 42;
 }
