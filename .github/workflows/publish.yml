@@ -51,11 +51,13 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: 🚢 Publish package
         id: publish

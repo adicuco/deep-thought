@@ -45,7 +45,7 @@ jobs:
       - name: ⎔ Setup Node.js
         uses: actions/setup-node@v4
 
-      - name: 📥 Download deps
+      - name: 📥 Install deps
         run: pnpm install --ignore-scripts
 
       - name: 🔎 Type check
