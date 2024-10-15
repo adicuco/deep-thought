@@ -63,7 +63,7 @@ jobs:
 
       - name: 🚢 Publish package
         id: publish
-        run: pmpm publish
+        run: npm publish
         continue-on-error: true
 
       - name: 📣 Notify publish result
